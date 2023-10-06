@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>hello-wasm example</title>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script type="module">
+      // Import the init function to initialize the WebAssembly module.
+      import init from './pkg/game_of_life_rs.js';
+
+      async function run() {
+        // Initialize the WebAssembly module.
+        await init();
+      }
+
+      run();
+    </script>
+  </body>
+</html>
