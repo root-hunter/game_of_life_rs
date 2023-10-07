@@ -30,13 +30,13 @@ use js_sys::{Promise, Math::{random, self}, Date};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
     
-const SIZE: u32 = 1024;
+const SIZE: u32 = 2048;
 const USIZE: usize = SIZE as usize;
-const FPS: u32 = 400;
+const FPS: u32 = 30;
 const FPR_REFRESH_MS: f64 = 60.0;
-const CELL_FOR_SIDE: u32 = SIZE/2;
+const CELL_FOR_SIDE: u32 = SIZE/4;
 const CELL_FOR_SIDE_USIZE: usize = CELL_FOR_SIDE as usize;
-const START_CELL: usize = USIZE*6;
+const START_CELL: usize = USIZE*2;
 
 const CELL_PIXEL_SIZE: u32 = SIZE/CELL_FOR_SIDE;
 const CLOCK: u32 = 1000/FPS;
@@ -80,19 +80,19 @@ fn draw_background(img: &mut RgbaImage, r: u8, g: u8, b: u8, a: u8){
     }
 }
 
+const COLOR_GRID: Rgba<u8> = Rgba([0, 255, 30, 255]);
+const COLOR_CELL: Rgba<u8> = Rgba([0, 0, 0, 255]);
+
+
 fn draw_grid(img: &mut RgbaImage, space: u32){
-    let mut x: u32 = 0;
-    let mut y: u32 = 0;
-    
+    let mut x = 0;
+
     while x < SIZE {
-        y = 0;
-        while  y < SIZE {
-            img.put_pixel(x, y, Rgba([0, 0, 0, 255]));
-            img.put_pixel(y, x, Rgba([0, 0, 0, 255]));
+        for y in 0..SIZE{
+            img.put_pixel(x, y, COLOR_GRID);
+            img.put_pixel(y, x, COLOR_GRID);
 
-            y += 1;
         }
-
         x += space;
     }
 }
@@ -100,7 +100,7 @@ fn draw_grid(img: &mut RgbaImage, space: u32){
 fn fill_cell(image: &mut RgbaImage, i: u32, j: u32){
     for x in (i*CELL_PIXEL_SIZE)..((i + 1)*(CELL_PIXEL_SIZE)){
         for y in (j*CELL_PIXEL_SIZE)..((j + 1)*(CELL_PIXEL_SIZE)){
-            image.put_pixel(x, y, Rgba([0, 0, 0, 255]));
+            image.put_pixel(x, y, COLOR_CELL);
         }
     }
 }
@@ -128,7 +128,6 @@ fn draw_matrix(image: &mut RgbaImage, mutex: &mut MutexGuard<'_, [[u8; CELL_FOR_
         }
     }
 }
-
 
 fn draw_matrix2(image: &mut RgbaImage,  matrix: &MatrixArcType){
     let mutex = matrix.lock().unwrap();
@@ -172,25 +171,24 @@ fn cell_count_neighbors(image: &mut RgbaImage, matrix: &MatrixArcType, total_ali
 
     for (i, row) in mutex.clone().iter().enumerate(){
         for (j, cell) in row.iter().enumerate() {
-            let mut count: u32 = 0;
+            let mut count = 0;
             let is_alive = *cell == 1;
 
             for k in 0..MATRIX_INDEX_CHECKS.len(){
                 let x = (i as i32 + MATRIX_INDEX_CHECKS[k][0]) as i32;
                 let y = (j as i32 + MATRIX_INDEX_CHECKS[k][1]) as i32;
 
-                if x < CELL_FOR_SIDE_USIZE as i32 && x >= 0 
-                && y < CELL_FOR_SIDE_USIZE as i32 && y >= 0{
+                if (x >= 0 && x < CELL_FOR_SIDE_USIZE as i32)  
+                    && (y >= 0 && y < CELL_FOR_SIDE_USIZE as i32) {
                     
                    if mutex[x as usize][y as usize] == 1 {
                         count += 1;
                     }
 
-                    if count >= 4{
+                    if (is_alive && count >= 4) || (!is_alive && count == 3) {
                         break;
                     }
                 }
-
             }
 
             if is_alive && count < 2 {
@@ -309,6 +307,7 @@ async fn start() {
             fps_text.set_text_content(Option::from(fps_string.as_str()));
 
             i = 0;
+
         }
 
         let epoch_string = format!("EPOCH: {}", epoch);

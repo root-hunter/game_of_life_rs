@@ -25,3 +25,8 @@ features = [
   'ImageData',
   'HtmlParagraphElement'
 ]
+
+[build]
+rustflags = [
+  '--max-memory=4294967296'
+]
