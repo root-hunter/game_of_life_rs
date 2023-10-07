@@ -30,13 +30,13 @@ use js_sys::{Promise, Math::{random, self}, Date};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
     
-const SIZE: u32 = 4096;
+const SIZE: u32 = 1024;
 const USIZE: usize = SIZE as usize;
-const FPS: u32 = 300;
-const FPR_REFRESH_MS: f64 = 300.0;
-const CELL_FOR_SIDE: u32 = SIZE/4;
+const FPS: u32 = 400;
+const FPR_REFRESH_MS: f64 = 60.0;
+const CELL_FOR_SIDE: u32 = SIZE/2;
 const CELL_FOR_SIDE_USIZE: usize = CELL_FOR_SIDE as usize;
-const START_CELL: usize = USIZE*8;
+const START_CELL: usize = USIZE*6;
 
 const CELL_PIXEL_SIZE: u32 = SIZE/CELL_FOR_SIDE;
 const CLOCK: u32 = 1000/FPS;
@@ -49,7 +49,7 @@ const MATRIX_INDEX_CHECKS: [[i32; 2]; 8] = [
 ];
 
 type MatrixType = [[u8; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
-
+type MatrixMutexType = Arc<Mutex<MatrixType>>;
 
 #[wasm_bindgen]
 pub async fn js_sleep(time_ms: i32) -> Result<(), JsValue> {
@@ -97,10 +97,10 @@ fn draw_grid(img: &mut RgbaImage, space: u32){
     }
 }
 
-fn fill_cell(img: &mut RgbaImage, i: u32, j: u32){
+fn fill_cell(image: &mut RgbaImage, i: u32, j: u32){
     for x in (i*CELL_PIXEL_SIZE)..((i + 1)*(CELL_PIXEL_SIZE)){
         for y in (j*CELL_PIXEL_SIZE)..((j + 1)*(CELL_PIXEL_SIZE)){
-            img.put_pixel(x, y, Rgba([0, 0, 0, 255]));
+            image.put_pixel(x, y, Rgba([0, 0, 0, 255]));
         }
     }
 }
@@ -119,17 +119,32 @@ fn reset_all(image: &mut RgbaImage, context: &CanvasRenderingContext2d, imagedat
     update_canvas(&context, &imagedata);
 }
 
-fn draw_matrix(image: &mut RgbaImage, matrix: &MatrixType){
-    for i in 0..CELL_FOR_SIDE_USIZE{
-        for j in 0..CELL_FOR_SIDE_USIZE{
-            if matrix[i][j] == 1 {
+fn draw_matrix(image: &mut RgbaImage, mutex: &mut MutexGuard<'_, [[u8; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE]>){
+    for (i, row) in mutex.iter().enumerate(){
+        for (j, cell) in row.iter().enumerate() {
+            if *cell == 1 {
                 fill_cell(image, i as u32, j as u32);
             }
         }
     }
 }
 
-fn matrix_random_fill(image: &mut RgbaImage, matrix: &mut MatrixType, max: usize){
+
+fn draw_matrix2(image: &mut RgbaImage,  matrix: &MatrixArcType){
+    let mutex = matrix.lock().unwrap();
+
+    for (i, row) in mutex.iter().enumerate(){
+        for (j, cell) in row.iter().enumerate() {
+            if *cell == 1 {
+                fill_cell(image, i as u32, j as u32);
+            }
+        }
+    }
+}
+
+fn matrix_random_fill(image: &mut RgbaImage, matrix: &MatrixArcType, max: usize){
+    let mutex = &mut matrix.lock().unwrap();
+
     let mut randx = (random()*CELL_FOR_SIDE as f64) as usize;
     let mut randy = (random()*CELL_FOR_SIDE as f64) as usize;
 
@@ -137,21 +152,28 @@ fn matrix_random_fill(image: &mut RgbaImage, matrix: &mut MatrixType, max: usize
         randx = (random()*CELL_FOR_SIDE as f64) as usize;
         randy = (random()*CELL_FOR_SIDE as f64) as usize;
 
-        matrix[randx][randy] = 1;
+        mutex[randx][randy] = 1;
     }
 
-    draw_matrix(image, matrix);
+    draw_matrix(image, mutex);
 }
 
-fn matrix_count_alive(matrix: &MatrixType) -> u32 {
-    return matrix.iter().flatten().sum::<u8>() as u32;
+fn matrix_count_alive(matrix: &MatrixArcType) -> u32 {
+    let mutex = &mut matrix.lock().unwrap();
+
+    return mutex.iter().flatten().sum::<u8>() as u32;
 }
 
-fn cell_count_neighbors(matrix: &mut MatrixType, total_alive: &mut u32) {
-    for i in 0..CELL_FOR_SIDE_USIZE{
-        for j in 0..CELL_FOR_SIDE_USIZE{
+use rayon::prelude::*;
+use std::sync::{Arc, Mutex, MutexGuard};
+
+fn cell_count_neighbors(image: &mut RgbaImage, matrix: &MatrixArcType, total_alive: &mut u32) {
+    let mutex = &mut matrix.lock().unwrap();
+
+    for (i, row) in mutex.clone().iter().enumerate(){
+        for (j, cell) in row.iter().enumerate() {
             let mut count: u32 = 0;
-            let is_alive = matrix[i][j] == 1;
+            let is_alive = *cell == 1;
 
             for k in 0..MATRIX_INDEX_CHECKS.len(){
                 let x = (i as i32 + MATRIX_INDEX_CHECKS[k][0]) as i32;
@@ -159,8 +181,8 @@ fn cell_count_neighbors(matrix: &mut MatrixType, total_alive: &mut u32) {
 
                 if x < CELL_FOR_SIDE_USIZE as i32 && x >= 0 
                 && y < CELL_FOR_SIDE_USIZE as i32 && y >= 0{
-
-                   if matrix[x as usize][y as usize] == 1 {
+                    
+                   if mutex[x as usize][y as usize] == 1 {
                         count += 1;
                     }
 
@@ -168,27 +190,31 @@ fn cell_count_neighbors(matrix: &mut MatrixType, total_alive: &mut u32) {
                         break;
                     }
                 }
+
             }
 
             if is_alive && count < 2 {
-                matrix[i][j] = 0;
-                *total_alive -= 1;
+                mutex[i][j] = 0;
+                //*total_alive -= 1;
             }else if is_alive && count > 3 {
-                matrix[i][j] = 0;
-                *total_alive -= 1;
+                mutex[i][j] = 0;
+                //*total_alive -= 1;
             }else if !is_alive && count == 3 {
-                matrix[i][j] = 1;
-                *total_alive += 1;
+                mutex[i][j] = 1;
+                //*total_alive += 1;
             }
         }
     }
+
 }
 
+type MatrixArcType = Arc<Mutex<MatrixType>>;
 
 #[wasm_bindgen(start)]
 async fn start() {
     let mut total_alive: u32 = START_CELL.try_into().unwrap();
-    let mut matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
+    let matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
+    let mut matrix: Arc<Mutex<MatrixType>> = Arc::new(Mutex::new(matrix));
 
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
@@ -198,6 +224,22 @@ async fn start() {
     .dyn_into::<web_sys::HtmlParagraphElement>()
     .map_err(|_| ())
     .unwrap();
+
+
+    let epoch_text = document.get_element_by_id("epoch").unwrap();
+    let epoch_text: web_sys::HtmlParagraphElement = epoch_text
+    .dyn_into::<web_sys::HtmlParagraphElement>()
+    .map_err(|_| ())
+    .unwrap();
+
+
+
+    let alive_text = document.get_element_by_id("alive").unwrap();
+    let alive_text: web_sys::HtmlParagraphElement = alive_text
+    .dyn_into::<web_sys::HtmlParagraphElement>()
+    .map_err(|_| ())
+    .unwrap();
+
 
     fps_text.set_text_content(Option::from("0.0"));
     
@@ -212,8 +254,7 @@ async fn start() {
 
     let mut image: image::ImageBuffer<Rgba<u8>, Vec<u8>> = RgbaImage::new(SIZE, SIZE);
     let image_raw = image.as_raw();
-    //console_log!("{:?}", image_raw);
-    
+
     let image_array = image_raw.as_slice();
     let image_clamped_array = wasm_bindgen::Clamped(image_array);
 
@@ -240,38 +281,42 @@ async fn start() {
 
     let mut t1 = Date::now();
 
-    let mut temp = Date::now();
-    let mut delta = Math::abs(temp - Date::now());
-    let mut fps_calc = FPS as f64 + ((1000.0 - (delta*FPS as f64))*FPS as f64)/1000.0;
-    let mut fps_string = format!("FPS: {}", fps_calc);
-    let mut now = Date::now();
 
-    matrix_random_fill(&mut image, &mut matrix, START_CELL);
+    matrix_random_fill(&mut image, &matrix, START_CELL);
 
+    let mut i: usize = 0;
+    let mut epoch: usize = 0;
     loop {
-        let total_alive_cells = matrix_count_alive(&matrix);
+        let temp = Date::now();
+        let total_alive_cells = matrix_count_alive(&mut matrix);
 
-        console_log!("{}", total_alive);
-
-        if total_alive_cells < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 1 {
-            temp = Date::now();
-            cell_count_neighbors(&mut matrix, &mut total_alive);
-            draw_matrix(&mut image, &matrix);
-            update_canvas(&context, &imagedata);
-            js_sleep(CLOCK as i32).await.unwrap();
+        cell_count_neighbors(&mut image, &mut matrix, &mut total_alive);
+        draw_matrix2(&mut image,  &mut matrix);
         
-            now = Date::now();
-            delta = Math::abs(temp - now);
+        update_canvas(&context, &imagedata);
+        js_sleep(CLOCK as i32).await.unwrap();
     
-            if temp - now >= FPR_REFRESH_MS {
-                t1 = now;
-                fps_calc = FPS as f64 + ((1000.0 - (delta*FPS as f64))*FPS as f64)/1000.0;
-                fps_string = format!("FPS: {}", fps_calc);
-                fps_text.set_text_content(Option::from(fps_string.as_str()));
-            }
-        }else{
-            console_log!("Virus are win");
-            break;
+        i += 1;
+        epoch += 1;
+
+        if i == FPS as usize {
+            let now = Date::now();
+            let delta = temp - now;
+            console_log!("{}", delta);
+
+            let fps_calc = FPS as f64 + ((1000.0 - (delta*FPS as f64))*FPS as f64)/1000.0;
+            let fps_string = format!("FPS: {}", fps_calc/60.0);
+            fps_text.set_text_content(Option::from(fps_string.as_str()));
+
+            i = 0;
         }
+
+        let epoch_string = format!("EPOCH: {}", epoch);
+        epoch_text.set_text_content(Option::from(epoch_string.as_str()));
+
+        let alive_string = format!("ALIVE CELLS: {}", total_alive_cells);
+        alive_text.set_text_content(Option::from(alive_string.as_str()));
+
+    
     }
 }
