@@ -22,5 +22,6 @@ features = [
   'Element',
   'HtmlCanvasElement',
   'Window',
-  'ImageData'
+  'ImageData',
+  'HtmlParagraphElement'
 ]

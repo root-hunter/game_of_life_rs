@@ -1,6 +1,6 @@
-use std::f64;
+use std::{f64, cell};
 use wasm_bindgen::prelude::*;
-use web_sys::ImageData;
+use web_sys::{ImageData, CanvasRenderingContext2d};
 use image::{RgbImage, Rgb, ImageFormat, RgbaImage, Rgba};
 
 #[wasm_bindgen]
@@ -27,34 +27,16 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-#[wasm_bindgen]
-pub fn sleep(ms: i32) -> js_sys::Promise {
-    js_sys::Promise::new(&mut |resolve, _| {
-        web_sys::window()
-            .unwrap()
-            .set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, ms)
-            .unwrap();
-    })
-}
-
-#[wasm_bindgen]
-pub fn process_raw_image(raw_data: Vec<u8>, width: u32, height: u32, gamma: f32) -> Vec<u8> {
-    let mut result = Vec::with_capacity((width * height) as usize);
-
-    for pixel in raw_data {
-        let normalized_pixel = pixel as f32 / 255.0;
-        let linear_pixel = normalized_pixel.powf(gamma);
-        let corrected_pixel = (linear_pixel * 255.0) as u8;
-        result.push(corrected_pixel);
-    }
-
-    result
-}
-
-use js_sys::{Promise, Math::random};
+use js_sys::{Promise, Math::{random, self}, Date};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
-
+    
+const SIZE: u32 = 256;
+const USIZE: usize = SIZE as usize;
+const FPS: u32 = 60;
+const FPR_REFRESH_MS: f64 = 300.0;
+const CELL_FOR_SIDE: u32 = 16;
+const CELL_PIXEL_SIZE: u32 = SIZE/CELL_FOR_SIDE;
 
 #[wasm_bindgen]
 pub async fn js_sleep(time_ms: i32) -> Result<(), JsValue> {
@@ -76,15 +58,61 @@ pub async fn js_sleep(time_ms: i32) -> Result<(), JsValue> {
         .map(|_| ())
 }
 
+fn draw_background(img: &mut RgbaImage, r: u8, g: u8, b: u8, a: u8){
+    for x in 0..SIZE {
+        for y in 0..SIZE {
+            img.put_pixel(x, y, Rgba([r, g, b, a]));
+            img.put_pixel(y, x, Rgba([r, g, b, a]));
+        }
+    }
+}
+
+fn draw_grid(img: &mut RgbaImage, space: u32){
+    let mut x: u32 = 0;
+    let mut y: u32 = 0;
+    
+    while x < SIZE {
+        y = 0;
+        while  y < SIZE {
+            img.put_pixel(x, y, Rgba([0, 0, 0, 255]));
+            img.put_pixel(y, x, Rgba([0, 0, 0, 255]));
+
+
+            y += 1;
+        }
+
+        x += space;
+    }
+}
+
+fn fill_cell(img: &mut RgbaImage, i: u32, j: u32){
+    console_log!("CELL LEN: {}", CELL_PIXEL_SIZE);
+
+    for x in (i*CELL_PIXEL_SIZE)..((i + 1)*(CELL_PIXEL_SIZE)){
+        for y in (j*CELL_PIXEL_SIZE)..((j + 1)*(CELL_PIXEL_SIZE)){
+            img.put_pixel(x, y, Rgba([0, 0, 0, 255]));
+        }
+    }
+}
+
+fn update_canvas(context: &CanvasRenderingContext2d, imagedata: &ImageData){
+    context.put_image_data(imagedata, 0.0, 0.0).unwrap();
+}
+
+
 
 #[wasm_bindgen(start)]
 async fn start() {
-    
-    const WIDTH: u32 = 512;
-    const HEIGHT: u32 = 512;
-
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
+
+    let fps_text = document.get_element_by_id("fps").unwrap();
+    let fps_text: web_sys::HtmlParagraphElement = fps_text
+    .dyn_into::<web_sys::HtmlParagraphElement>()
+    .map_err(|_| ())
+    .unwrap();
+
+    fps_text.set_text_content(Option::from("0.0"));
     
     let canvas = document.get_element_by_id("canvas").unwrap();
     let canvas: web_sys::HtmlCanvasElement = canvas
@@ -92,90 +120,71 @@ async fn start() {
         .map_err(|_| ())
         .unwrap();
 
-    canvas.set_width(WIDTH + 100);
-    canvas.set_height(HEIGHT + 100);
+    canvas.set_width(SIZE);
+    canvas.set_height(SIZE);
 
-    let mut img = RgbaImage::new(WIDTH, HEIGHT);
-
-    for x in 100..300 {
-        img.put_pixel(x, x, Rgba([255, 120, 0, 255]));
-    }
-
-    let export_vet_image = img.as_raw();
-    console_log!("{:?}", export_vet_image);
-    let data = export_vet_image.as_slice();
+    let mut image: image::ImageBuffer<Rgba<u8>, Vec<u8>> = RgbaImage::new(SIZE, SIZE);
+    let image_raw = image.as_raw();
+    console_log!("{:?}", image_raw);
     
-    let clamped_image = wasm_bindgen::Clamped(data);
+    let image_array = image_raw.as_slice();
+    let image_clamped_array = wasm_bindgen::Clamped(image_array);
 
-    let imagedata = ImageData::new_with_u8_clamped_array(clamped_image, WIDTH).unwrap();
-    console_log!("{:?}", clamped_image);
+    let imagedata = ImageData::new_with_u8_clamped_array(image_clamped_array, SIZE).unwrap();
+    console_log!("{:?}", image_clamped_array);
     
     let context = canvas
         .get_context("2d")
         .unwrap()
         .unwrap()
-        .dyn_into::<web_sys::CanvasRenderingContext2d>()
+        .dyn_into::<CanvasRenderingContext2d>()
         .unwrap();
 
     context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
     context.put_image_data(&imagedata, 0.0, 0.0).unwrap();
 
+    let r_random = (random() * 255.0) as u8;
+    let g_random = (random() * 255.0) as u8;
+    let b_random = (random() * 255.0) as u8;
+
+    draw_background(&mut image, r_random, g_random, b_random, 255);
+
     let mut i = 0;
-    let clock = 1000/2;
+    let clock = 1000/FPS;
+
+
+    let test = js_sys::Function::new_no_args("");
+    canvas.set_onclick(Option::from(&test));
+
+    draw_grid(&mut image, SIZE/CELL_FOR_SIDE);
+    update_canvas(&context, &imagedata);
+
+    let mut t1 = Date::now();
+    let mut temp = Date::now();
+    let mut delta = Math::abs(temp - Date::now());
+    let mut fps_calc = FPS as f64 + ((1000.0 - (delta*FPS as f64))*FPS as f64)/1000.0;
+    let mut fps_string = format!("FPS: {}", fps_calc);
+    let mut now = Date::now();
+
+    fill_cell(&mut image, 5, 3);
+
     loop {
-        let r_random = (random() * 255.0) as u8;
-        let g_random = (random() * 255.0) as u8;
-        let b_random = (random() * 255.0) as u8;
+        temp = Date::now();
 
-        for x in 0..WIDTH {
-            for y in 0..HEIGHT {
-                img.put_pixel(x, y, Rgba([r_random, g_random, b_random, 255]));
-                img.put_pixel(y, x, Rgba([r_random, g_random, b_random, 255]));
-            }
-        }
+        js_sleep(clock as i32).await.unwrap();
+        update_canvas(&context, &imagedata);
 
-        //context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
-        context.put_image_data(&imagedata, 0.0, 0.0).unwrap();
+        delta = Math::abs(temp - Date::now());
+        fps_calc = FPS as f64 + ((1000.0 - (delta*FPS as f64))*FPS as f64)/1000.0;
+        fps_string = format!("FPS: {}", fps_calc);
 
-        js_sleep(clock).await.unwrap();
-        console_log!("Hello world {}", i);
+        now = Date::now();
 
+        if now - t1 >= FPR_REFRESH_MS {
+            t1 = now;
+            fps_text.set_text_content(Option::from(fps_string.as_str()));
+        }    
+      
         i += 1;
     }
-
-
-  /*   
-
-
-    context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
-
-    context.rect(0.0, 0.0, 100.0, 100.0);
-    context.stroke();
-
-    context.begin_path();
-
-    // Draw the outer circle.
-    context
-        .arc(75.0, 75.0, 50.0, 0.0, f64::consts::PI * 2.0)
-        .unwrap();
-
-    // Draw the mouth.
-    context.move_to(110.0, 75.0);
-    context.arc(75.0, 75.0, 35.0, 0.0, f64::consts::PI).unwrap();
-
-    // Draw the left eye.
-    context.move_to(65.0, 65.0);
-    context
-        .arc(60.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
-        .unwrap();
-
-    // Draw the right eye.
-    context.move_to(95.0, 65.0);
-    context
-        .arc(90.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
-        .unwrap();
-
-    context.stroke();
-
-    set_timeout(&window, &closure, 2000); */
 }
