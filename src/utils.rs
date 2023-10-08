@@ -1,5 +1,4 @@
 use crate::constants::*;
-use crate::matrix::*;
 
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlCanvasElement;
@@ -10,11 +9,6 @@ use image::{RgbaImage, Rgba};
 use js_sys::{Promise, Math::random};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::window;
-use std::sync::{Arc, Mutex, MutexGuard};
-
-pub type MatrixType = [[u8; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
-pub type MatrixMutexType = Arc<Mutex<MatrixType>>;
-pub type MatrixArcType = Arc<Mutex<MatrixType>>;
 
 #[wasm_bindgen]
 pub async fn js_sleep(time_ms: i32) -> Result<(), JsValue> {

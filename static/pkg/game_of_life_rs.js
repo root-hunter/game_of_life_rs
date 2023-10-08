@@ -249,7 +249,7 @@ function getClampedArrayU8FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getUint8ClampedMemory0().subarray(ptr / 1, ptr / 1 + len);
 }
-function __wbg_adapter_70(arg0, arg1, arg2, arg3) {
+function __wbg_adapter_72(arg0, arg1, arg2, arg3) {
     wasm.wasm_bindgen__convert__closures__invoke2_mut__h235e54c193094b12(arg0, arg1, addHeapObject(arg2), addHeapObject(arg3));
 }
 
@@ -343,6 +343,9 @@ function __wbg_get_imports() {
         }
         const ret = result;
         return ret;
+    };
+    imports.wbg.__wbg_setclassName_e7c93281fe6d80d6 = function(arg0, arg1, arg2) {
+        getObject(arg0).className = getStringFromWasm0(arg1, arg2);
     };
     imports.wbg.__wbg_instanceof_CanvasRenderingContext2d_bc0a6635c96eca9b = function(arg0) {
         let result;
@@ -450,7 +453,7 @@ function __wbg_get_imports() {
                 const a = state0.a;
                 state0.a = 0;
                 try {
-                    return __wbg_adapter_70(a, state0.b, arg0, arg1);
+                    return __wbg_adapter_72(a, state0.b, arg0, arg1);
                 } finally {
                     state0.a = a;
                 }
@@ -484,12 +487,12 @@ function __wbg_get_imports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper77 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 28, __wbg_adapter_16);
+    imports.wbg.__wbindgen_closure_wrapper74 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 23, __wbg_adapter_16);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper141 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 61, __wbg_adapter_19);
+    imports.wbg.__wbindgen_closure_wrapper132 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 53, __wbg_adapter_19);
         return addHeapObject(ret);
     };
 

@@ -3,16 +3,19 @@
 mod utils;
 mod constants;
 mod matrix;
+mod types;
 
 use utils::*;
 use constants::*;
-use matrix::{*, MatrixType};
+use matrix::*;
+use types::*;
 
 use chrono::{DateTime, Local, Duration};
 use wasm_bindgen::prelude::*;
 use web_sys::ImageData;
 use image::{RgbaImage, Rgba};
 use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
 
 
 #[wasm_bindgen]
@@ -41,8 +44,11 @@ macro_rules! console_log {
 
 #[wasm_bindgen(start)]
 async fn start() {
-    let matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
-    let mut matrix: Arc<Mutex<MatrixType>> = Arc::new(Mutex::new(matrix));
+    let mut matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
+    let mut matrix_cnt: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
+    //let mut matrix: MatrixArcType = Arc::new(Mutex::new(matrix));
+
+    console_log!("INITIAL SUM: {:?}", matrix_count_alive(&matrix));
 
     let epoch_text = get_paragraph("epoch");
     let epoch_total_text = get_paragraph("epoch-total");
@@ -65,12 +71,11 @@ async fn start() {
 
     let imagedata = ImageData::new_with_u8_clamped_array(image_clamped_array, SIZE).unwrap();
 
-
     context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
     context.put_image_data(&imagedata, 0.0, 0.0).unwrap();
 
     reset_all(&mut image, &context, &imagedata);
-    matrix_random_fill(&mut image, &matrix, START_CELL);
+    matrix_random_fill(&mut image, &mut matrix, START_CELL);
 
     let mut epoch: usize = 0;
     let mut temp: DateTime<Local>;
@@ -78,38 +83,39 @@ async fn start() {
     let mut now: DateTime<Local>;
 
     let start = chrono::offset::Local::now();
-    let mut total_alive: u32 = 0;
+    let mut count = matrix_count(&matrix_cnt);
     
-    loop {
+
+    while count < (CELL_FOR_SIDE*CELL_FOR_SIDE) {
+        let mut total_alive: u32 = 0;
         temp = chrono::offset::Local::now();
 
-        cell_count_neighbors(&mut image, &mut matrix, &mut total_alive);
-        
+        cell_count_neighbors(&mut matrix, &mut matrix_cnt, &mut total_alive);
+        draw_matrix(&mut image, &matrix, &mut total_alive);
         update_canvas(&context, &imagedata);
         js_sleep(CLOCK as i32).await.unwrap();
     
         epoch += 1;
 
-        if epoch % (FPS as usize/8) == 0 {
+        if epoch % (FPS as usize/8) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 2{
             now = chrono::offset::Local::now();
             _delta = temp - now;
             let seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
 
             epoch_text.set_text_content(Option::from(format!("EPOCH: {:.2}/s", epoch as f64/seconds_from_start).as_str()));
             time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
-        }
-
-        if epoch % ((FPS as usize)/16) == 0{
 
             epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-            
+            console_log!("TOTAL ALIVE: {}", matrix_count(&matrix_cnt));
         }
 
+        count = matrix_count(&matrix_cnt);
 
-        if epoch % (FPS as usize*2) == 0 {
-            let cnt = matrix_count(&matrix.clone());
-            //cell_alive_text.set_text_content(Option::from(format!("ALIVE CELLS: {}", cnt).as_str()));
-            console_log!("{:?}", matrix.lock().unwrap());
-        }
+        /* if count >= (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3 {
+            draw_matrix_black(&mut image);
+        } */
     }
+    time_text.set_class_name("colored");
+
+
 }
