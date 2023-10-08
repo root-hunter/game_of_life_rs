@@ -82,7 +82,7 @@ async fn start() {
     let mut _delta: Duration;
     let mut now: DateTime<Local>;
 
-    let start = chrono::offset::Local::now();
+    let start_time = chrono::offset::Local::now();
     let mut count = matrix_count(&matrix_cnt);
     let mut seconds_from_start: f64;
 
@@ -90,8 +90,10 @@ async fn start() {
 
     image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
 
+    let mut stop = false;
+
     while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
-        if play_button.value() == "start"{
+        if !stop {
 
             let mut total_alive: u32 = 0;
             temp = chrono::offset::Local::now();
@@ -103,7 +105,7 @@ async fn start() {
         
             epoch += 1;
             now = chrono::offset::Local::now();
-            seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
+            seconds_from_start = ((now - start_time).num_milliseconds()) as f64/1000.0 as f64;
     
             if epoch % (FPS as usize/16) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
                 epoch_text.set_text_content(Option::from(format!("EPOCH (AVG): {:.2}/s", epoch as f64/seconds_from_start).as_str()));
@@ -121,6 +123,9 @@ async fn start() {
                     time_text.set_class_name("colored");
                 }
                 cell_total_text.set_text_content(Option::from(format!("CELLS: {}/{}", count, CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
+
+                stop = play_button.value() == "stop";
+
             }
     
             count = matrix_count(&matrix_cnt);
