@@ -90,11 +90,17 @@ async fn start() {
 
     image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
 
-    let mut stop = false;
+    let mut start: bool = true;
 
     while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
-        if !stop {
+        let check_frame_fix = epoch % (FPS as usize/2) == 0;
+        let check_frame_16th = epoch % (FPS as usize/16) == 0;
+        
+        if check_frame_16th {
+            start = play_button.value() == "start";
+        }
 
+        if start {
             let mut total_alive: u32 = 0;
             temp = chrono::offset::Local::now();
     
@@ -107,11 +113,11 @@ async fn start() {
             now = chrono::offset::Local::now();
             seconds_from_start = ((now - start_time).num_milliseconds()) as f64/1000.0 as f64;
     
-            if epoch % (FPS as usize/16) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
+            if check_frame_16th && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
                 epoch_text.set_text_content(Option::from(format!("EPOCH (AVG): {:.2}/s", epoch as f64/seconds_from_start).as_str()));
             }
     
-            if epoch % (FPS as usize/16) == 0 {
+            if check_frame_16th {
                 _delta = temp - now;
                 if  count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
                     time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
@@ -124,9 +130,8 @@ async fn start() {
                 }
                 cell_total_text.set_text_content(Option::from(format!("CELLS: {}/{}", count, CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
 
-                stop = play_button.value() == "stop";
-
             }
+        
     
             count = matrix_count(&matrix_cnt);
         }else{
