@@ -55,7 +55,6 @@ async fn start() {
     let time_text = get_paragraph("time");
     let cell_total_text = get_paragraph("cell-total");
 
-    cell_total_text.set_text_content(Option::from(format!("TOTAL CELLS: {}", CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
 
     let canvas = get_canvas("canvas");
     let context = get_canvas_context(&canvas);
@@ -87,7 +86,7 @@ async fn start() {
     let mut seconds_from_start: f64;
     
 
-    while count < (CELL_FOR_SIDE*CELL_FOR_SIDE) {
+    while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
         let mut total_alive: u32 = 0;
         temp = chrono::offset::Local::now();
 
@@ -97,20 +96,24 @@ async fn start() {
         js_sleep(CLOCK as i32).await.unwrap();
     
         epoch += 1;
+        now = chrono::offset::Local::now();
+        seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
+
+        if epoch % (FPS as usize/16) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
+            epoch_text.set_text_content(Option::from(format!("EPOCH (AVG): {:.2}/s", epoch as f64/seconds_from_start).as_str()));
+        }
 
         if epoch % (FPS as usize/8) == 0 {
-            now = chrono::offset::Local::now();
             _delta = temp - now;
-            seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
             if  count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
-                epoch_text.set_text_content(Option::from(format!("EPOCH : {:.2}/s", epoch as f64/seconds_from_start).as_str()));
                 time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
     
                 epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-                console_log!("TOTAL ALIVE: {}", matrix_count(&matrix_cnt));
             }else{
+                count = CELL_FOR_SIDE*CELL_FOR_SIDE;
                 time_text.set_class_name("colored");
             }
+            cell_total_text.set_text_content(Option::from(format!("CELLS: {}/{}", count, CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
         }
 
         count = matrix_count(&matrix_cnt);

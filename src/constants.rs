@@ -1,6 +1,6 @@
 use image::Rgba;
 
-pub const SIZE: u32 = 1024;
+pub const SIZE: u32 = 2048;
 pub const USIZE: usize = SIZE as usize;
 pub const FPS: u32 = 400;
 pub const FPR_REFRESH_MS: f64 = 60.0;
