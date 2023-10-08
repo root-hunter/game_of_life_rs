@@ -34,3 +34,8 @@ document.getElementById('download-png').addEventListener('click', () => {
     // Simulate a click to trigger the download
     downloadLink.click();
 });
+
+
+document.getElementById('restart').addEventListener('click', () => {
+    window.location.reload();
+});

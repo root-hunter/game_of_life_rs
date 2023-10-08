@@ -10,7 +10,7 @@ use matrix::{*, MatrixType};
 
 use chrono::{DateTime, Local, Duration};
 use wasm_bindgen::prelude::*;
-use web_sys::{ImageData, CanvasRenderingContext2d, HtmlCanvasElement, HtmlParagraphElement};
+use web_sys::ImageData;
 use image::{RgbaImage, Rgba};
 use std::sync::{Arc, Mutex};
 
@@ -48,7 +48,6 @@ async fn start() {
     let epoch_total_text = get_paragraph("epoch-total");
     let time_text = get_paragraph("time");
     let cell_total_text = get_paragraph("cell-total");
-    let cell_alive_text = get_paragraph("cell-alive");
 
     cell_total_text.set_text_content(Option::from(format!("TOTAL CELLS: {}", CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
 
@@ -100,7 +99,7 @@ async fn start() {
             time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
         }
 
-        if epoch % (FPS as usize) == 0{
+        if epoch % ((FPS as usize)/16) == 0{
 
             epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
             
@@ -109,7 +108,7 @@ async fn start() {
 
         if epoch % (FPS as usize*2) == 0 {
             let cnt = matrix_count(&matrix.clone());
-            cell_alive_text.set_text_content(Option::from(format!("ALIVE CELLS: {}", cnt).as_str()));
+            //cell_alive_text.set_text_content(Option::from(format!("ALIVE CELLS: {}", cnt).as_str()));
             console_log!("{:?}", matrix.lock().unwrap());
         }
     }
