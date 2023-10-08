@@ -84,6 +84,7 @@ async fn start() {
 
     let start = chrono::offset::Local::now();
     let mut count = matrix_count(&matrix_cnt);
+    let mut seconds_from_start: f64;
     
 
     while count < (CELL_FOR_SIDE*CELL_FOR_SIDE) {
@@ -97,16 +98,19 @@ async fn start() {
     
         epoch += 1;
 
-        if epoch % (FPS as usize/8) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 2{
+        if epoch % (FPS as usize/8) == 0 {
             now = chrono::offset::Local::now();
             _delta = temp - now;
-            let seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
-
-            epoch_text.set_text_content(Option::from(format!("EPOCH: {:.2}/s", epoch as f64/seconds_from_start).as_str()));
-            time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
-
-            epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-            console_log!("TOTAL ALIVE: {}", matrix_count(&matrix_cnt));
+            seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
+            if  count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
+                epoch_text.set_text_content(Option::from(format!("EPOCH : {:.2}/s", epoch as f64/seconds_from_start).as_str()));
+                time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
+    
+                epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
+                console_log!("TOTAL ALIVE: {}", matrix_count(&matrix_cnt));
+            }else{
+                time_text.set_class_name("colored");
+            }
         }
 
         count = matrix_count(&matrix_cnt);
@@ -116,6 +120,4 @@ async fn start() {
         } */
     }
     time_text.set_class_name("colored");
-
-
 }
