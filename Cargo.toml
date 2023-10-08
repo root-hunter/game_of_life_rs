@@ -24,7 +24,8 @@ features = [
   'HtmlCanvasElement',
   'Window',
   'ImageData',
-  'HtmlParagraphElement'
+  'HtmlParagraphElement',
+  'HtmlButtonElement'
 ]
 
 [build]

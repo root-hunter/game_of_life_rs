@@ -38,6 +38,7 @@ canvas {
 button {
   padding: 10px;
   font-family: 'Press Start 2P';font-size: 22px;
+  background-color: orange;
 }
 
 .menu-button{
@@ -47,4 +48,12 @@ button {
 
 .colored{
   color: red;
+}
+
+button[value="start"]{
+  background-color: red;
+}
+
+button[value="stop"]{
+  background-color: green;
 }

@@ -84,43 +84,47 @@ async fn start() {
     let start = chrono::offset::Local::now();
     let mut count = matrix_count(&matrix_cnt);
     let mut seconds_from_start: f64;
-    
+
+    let play_button = get_button("play");    
 
     while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
-        let mut total_alive: u32 = 0;
-        temp = chrono::offset::Local::now();
+        if play_button.value() == "start"{
 
-        cell_count_neighbors(&mut matrix, &mut matrix_cnt, &mut total_alive);
-        draw_matrix(&mut image, &matrix, &mut total_alive);
-        update_canvas(&context, &imagedata);
-        js_sleep(CLOCK as i32).await.unwrap();
+            let mut total_alive: u32 = 0;
+            temp = chrono::offset::Local::now();
     
-        epoch += 1;
-        now = chrono::offset::Local::now();
-        seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
-
-        if epoch % (FPS as usize/16) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
-            epoch_text.set_text_content(Option::from(format!("EPOCH (AVG): {:.2}/s", epoch as f64/seconds_from_start).as_str()));
-        }
-
-        if epoch % (FPS as usize/8) == 0 {
-            _delta = temp - now;
-            if  count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
-                time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
+            cell_count_neighbors(&mut matrix, &mut matrix_cnt, &mut total_alive);
+            draw_matrix(&mut image, &matrix, &mut total_alive);
+            update_canvas(&context, &imagedata);
+            js_sleep(CLOCK as i32).await.unwrap();
+        
+            epoch += 1;
+            now = chrono::offset::Local::now();
+            seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
     
-                epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-            }else{
-                count = CELL_FOR_SIDE*CELL_FOR_SIDE;
-                time_text.set_class_name("colored");
+            if epoch % (FPS as usize/16) == 0 && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
+                epoch_text.set_text_content(Option::from(format!("EPOCH (AVG): {:.2}/s", epoch as f64/seconds_from_start).as_str()));
             }
-            cell_total_text.set_text_content(Option::from(format!("CELLS: {}/{}", count, CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
+    
+            if epoch % (FPS as usize/16) == 0 {
+                _delta = temp - now;
+                if  count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
+                    time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
+    
+                    epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
+                    epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
+                }else{
+                    count = CELL_FOR_SIDE*CELL_FOR_SIDE;
+                    time_text.set_class_name("colored");
+                }
+                cell_total_text.set_text_content(Option::from(format!("CELLS: {}/{}", count, CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
+            }
+    
+            count = matrix_count(&matrix_cnt);
+        }else{
+            js_sleep(CLOCK as i32).await.unwrap();
         }
 
-        count = matrix_count(&matrix_cnt);
-
-        /* if count >= (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3 {
-            draw_matrix_black(&mut image);
-        } */
     }
     time_text.set_class_name("colored");
 }

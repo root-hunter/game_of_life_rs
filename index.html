@@ -17,8 +17,9 @@
     <p id="cell-alive"></p>
 
     <div class="menu-button">
-      <button id="restart">Restart</button>
       <button id="download-png">Download PNG</button>
+      <button id="restart">Restart</button>
+      <button id="play" value="start">STOP</button>
     </div>
 
     <div id="zoomable-div">
@@ -27,7 +28,6 @@
             </canvas>
         </div>
     </div>
-    <script type="text/javascript" charset="utf-8" src="./static/script.js"></script>
 
     <script type="module">
       // Import the init function to initialize the WebAssembly module.
@@ -40,6 +40,7 @@
 
       run();
     </script>
+    <script type="text/javascript" charset="utf-8" src="./static/script.js"></script>
   </body>
   <footer>
     <p><b>roothunter inc.</b></p>

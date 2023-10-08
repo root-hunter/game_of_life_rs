@@ -1,6 +1,7 @@
 use crate::constants::*;
 
 use wasm_bindgen::prelude::*;
+use web_sys::HtmlButtonElement;
 use web_sys::HtmlCanvasElement;
 use web_sys::HtmlParagraphElement;
 use web_sys::{ImageData, CanvasRenderingContext2d};
@@ -105,4 +106,15 @@ pub fn get_paragraph(id: &str) -> HtmlParagraphElement {
     .unwrap();
 
     return paragraph;
+}
+
+pub fn get_button(id: &str) -> HtmlButtonElement {
+    let document = web_sys::window().unwrap().document().unwrap();
+    let button = document.get_element_by_id(id).unwrap();
+    let button: web_sys::HtmlButtonElement = button
+    .dyn_into::<web_sys::HtmlButtonElement>()
+    .map_err(|_| ())
+    .unwrap();
+
+    return button;
 }
