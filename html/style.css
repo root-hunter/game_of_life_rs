@@ -57,3 +57,7 @@ button[value="start"]{
 button[value="stop"]{
   background-color: green;
 }
+
+button[value="info"]{
+  background-color: grey;
+}

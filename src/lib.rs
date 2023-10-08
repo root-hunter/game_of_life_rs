@@ -54,6 +54,7 @@ async fn start() {
     let epoch_total_text = get_paragraph("epoch-total");
     let time_text = get_paragraph("time");
     let cell_total_text = get_paragraph("cell-total");
+    let image_size_text = get_paragraph("image-size");
 
 
     let canvas = get_canvas("canvas");
@@ -86,6 +87,8 @@ async fn start() {
     let mut seconds_from_start: f64;
 
     let play_button = get_button("play");    
+
+    image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
 
     while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
         if play_button.value() == "start"{

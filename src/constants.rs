@@ -1,10 +1,10 @@
 use image::Rgba;
 
-pub const SIZE: u32 = 2048;
+pub const SIZE: u32 = 1024;
 pub const USIZE: usize = SIZE as usize;
 pub const FPS: u32 = 400;
 pub const FPR_REFRESH_MS: f64 = 60.0;
-pub const CELL_FOR_SIDE: u32 = SIZE/8;
+pub const CELL_FOR_SIDE: u32 = SIZE/4;
 pub const CELL_FOR_SIDE_USIZE: usize = CELL_FOR_SIDE as usize;
 pub const START_CELL: usize = USIZE*3;
 
