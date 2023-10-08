@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>hello-wasm example</title>
+    <link rel="stylesheet" href="./style.css">
+    <link href='https://fonts.googleapis.com/css?family=Press Start 2P' rel='stylesheet'>
+  </head>
+  <body>
+    <h2>The Game of Life</h2>
+    
+    <p id="time"></p>
+    <p id="epoch"></p>
+    <p id="epoch-total"></p>
+    <br />
+    <p id="size"></p>
+    <p id="cell-total"></p>
+    <p id="cell-alive"></p>
+    <br />
+
+    <div class="menu-button">
+      <button id="download-png">Download PNG</button>
+    </div>
+
+    <div id="zoomable-div">
+        <div id="zoomable-content">
+            <canvas id="canvas" class="zoomable-content">
+            </canvas>
+        </div>
+    </div>
+    <script type="text/javascript" charset="utf-8" src="./script.js"></script>
+
+    <script type="module">
+      // Import the init function to initialize the WebAssembly module.
+      import init from './pkg/game_of_life_rs.js';
+
+      async function run() {
+        // Initialize the WebAssembly module.
+        await init();
+      }
+
+      run();
+    </script>
+  </body>
+  <footer>
+    <p><b>roothunter inc.</b></p>
+  </footer>
+</html>
