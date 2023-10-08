@@ -2,13 +2,15 @@
 #[macro_use]
 mod utils;
 mod constants;
+mod matrix;
 
 use utils::*;
 use constants::*;
+use matrix::{*, MatrixType};
 
 use chrono::{DateTime, Local, Duration};
 use wasm_bindgen::prelude::*;
-use web_sys::{ImageData, CanvasRenderingContext2d};
+use web_sys::{ImageData, CanvasRenderingContext2d, HtmlCanvasElement, HtmlParagraphElement};
 use image::{RgbaImage, Rgba};
 use std::sync::{Arc, Mutex};
 
@@ -37,56 +39,21 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-
 #[wasm_bindgen(start)]
 async fn start() {
     let matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
     let mut matrix: Arc<Mutex<MatrixType>> = Arc::new(Mutex::new(matrix));
 
-    let window = web_sys::window().unwrap();
-    let document = window.document().unwrap();
-
-    let epoch_text = document.get_element_by_id("epoch").unwrap();
-    let epoch_text: web_sys::HtmlParagraphElement = epoch_text
-    .dyn_into::<web_sys::HtmlParagraphElement>()
-    .map_err(|_| ())
-    .unwrap();
-
-
-    let epoch_total_text = document.get_element_by_id("epoch-total").unwrap();
-    let epoch_total_text: web_sys::HtmlParagraphElement = epoch_total_text
-    .dyn_into::<web_sys::HtmlParagraphElement>()
-    .map_err(|_| ())
-    .unwrap();
-
-
-    let time_text = document.get_element_by_id("time").unwrap();
-    let time_text: web_sys::HtmlParagraphElement = time_text
-    .dyn_into::<web_sys::HtmlParagraphElement>()
-    .map_err(|_| ())
-    .unwrap();
-
-    let cell_total_text = document.get_element_by_id("cell-total").unwrap();
-    let cell_total_text: web_sys::HtmlParagraphElement = cell_total_text
-    .dyn_into::<web_sys::HtmlParagraphElement>()
-    .map_err(|_| ())
-    .unwrap();
-
-
-    let cell_alive_text = document.get_element_by_id("cell-alive").unwrap();
-    let cell_alive_text: web_sys::HtmlParagraphElement = cell_alive_text
-    .dyn_into::<web_sys::HtmlParagraphElement>()
-    .map_err(|_| ())
-    .unwrap();
-
+    let epoch_text = get_paragraph("epoch");
+    let epoch_total_text = get_paragraph("epoch-total");
+    let time_text = get_paragraph("time");
+    let cell_total_text = get_paragraph("cell-total");
+    let cell_alive_text = get_paragraph("cell-alive");
 
     cell_total_text.set_text_content(Option::from(format!("TOTAL CELLS: {}", CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
 
-    let canvas = document.get_element_by_id("canvas").unwrap();
-    let canvas: web_sys::HtmlCanvasElement = canvas
-        .dyn_into::<web_sys::HtmlCanvasElement>()
-        .map_err(|_| ())
-        .unwrap();
+    let canvas = get_canvas("canvas");
+    let context = get_canvas_context(&canvas);
 
     canvas.set_width(SIZE);
     canvas.set_height(SIZE);
@@ -98,14 +65,7 @@ async fn start() {
     let image_clamped_array = wasm_bindgen::Clamped(image_array);
 
     let imagedata = ImageData::new_with_u8_clamped_array(image_clamped_array, SIZE).unwrap();
-    //console_log!("{:?}", image_clamped_array);
-    
-    let context = canvas
-        .get_context("2d")
-        .unwrap()
-        .unwrap()
-        .dyn_into::<CanvasRenderingContext2d>()
-        .unwrap();
+
 
     context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
     context.put_image_data(&imagedata, 0.0, 0.0).unwrap();
