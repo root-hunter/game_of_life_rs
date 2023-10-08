@@ -8,10 +8,21 @@ body {
 canvas { 
   background:#fff;
   border:1px solid #ccc;
-  width: 80vw;
   padding: 30px;
   border: 1px solid #000;
  }
+
+ @media (min-width: 1201px) {
+  canvas {
+    width: 40vw;
+  }
+}
+
+@media (max-width: 1200px) {
+  canvas {
+    width: 90vw;
+  }
+}
 
 #zoomable-div {
   overflow: auto;
@@ -24,12 +35,12 @@ canvas {
   transition: transform 0.2s ease-in-out;
 }
 
-input[type="button"] {
+button {
   padding: 10px;
+  font-family: 'Press Start 2P';font-size: 22px;
 }
 
 .menu-button{
   padding-top: 20px;
   padding-bottom: 20px;
-
 }

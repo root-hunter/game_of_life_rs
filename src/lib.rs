@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, Duration};
+use chrono::{DateTime, Local, Duration, format};
 use wasm_bindgen::prelude::*;
 use web_sys::{ImageData, CanvasRenderingContext2d};
 use image::{RgbaImage, Rgba};
@@ -33,11 +33,11 @@ use web_sys::window;
     
 const SIZE: u32 = 1024;
 const USIZE: usize = SIZE as usize;
-const FPS: u32 = 500;
+const FPS: u32 = 32;
 const FPR_REFRESH_MS: f64 = 60.0;
-const CELL_FOR_SIDE: u32 = SIZE/2;
+const CELL_FOR_SIDE: u32 = SIZE/8;
 const CELL_FOR_SIDE_USIZE: usize = CELL_FOR_SIDE as usize;
-const START_CELL: usize = USIZE*8;
+const START_CELL: usize = USIZE;
 
 const CELL_PIXEL_SIZE: u32 = SIZE/CELL_FOR_SIDE;
 const CLOCK: u32 = 1000/FPS;
@@ -84,7 +84,6 @@ fn draw_background(img: &mut RgbaImage, r: u8, g: u8, b: u8, a: u8){
 const COLOR_GRID: Rgba<u8> = Rgba([0, 0, 0, 255]);
 const COLOR_CELL: Rgba<u8> = Rgba([0, 0, 0, 255]);
 
-
 fn draw_grid(img: &mut RgbaImage, space: u32){
     let mut x = 0;
 
@@ -111,19 +110,20 @@ fn update_canvas(context: &CanvasRenderingContext2d, imagedata: &ImageData){
 }
 
 fn reset_all(image: &mut RgbaImage, context: &CanvasRenderingContext2d, imagedata: &ImageData){
-    let r_random = (random() * 255.0) as u8;
-    let g_random = (random() * 255.0) as u8;
-    let b_random = (random() * 255.0) as u8;
+    let r_random = 255 - (random() * 245.0) as u8;
+    let g_random = 255 - (random() * 10.0) as u8;
+    let b_random = 255 - (random() * 245.0) as u8;
 
     draw_background(image, r_random, g_random, b_random, 255);
     draw_grid(image, SIZE/CELL_FOR_SIDE);
     update_canvas(&context, &imagedata);
 }
 
-fn draw_matrix(image: &mut RgbaImage, mutex: &mut MutexGuard<'_, [[u8; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE]>){
+fn draw_matrix(image: &mut RgbaImage, mutex: &mut MutexGuard<'_, [[u8; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE]>, total_alive: &mut u32){
     for (i, row) in mutex.iter().enumerate(){
         for (j, cell) in row.iter().enumerate() {
             if *cell == 1 {
+                *total_alive += 1;
                 fill_cell(image, i as u32, j as u32);
             }
         }
@@ -155,7 +155,8 @@ fn matrix_random_fill(image: &mut RgbaImage, matrix: &MatrixArcType, max: usize)
         mutex[randx][randy] = 1;
     }
 
-    draw_matrix(image, mutex);
+    let mut t: u32 = 0;
+    draw_matrix(image, mutex, &mut t);
 }
 
 fn matrix_count_alive(matrix: &MatrixArcType) -> u32 {
@@ -180,7 +181,6 @@ fn cell_count_neighbors(image: &mut RgbaImage, matrix: &MatrixArcType, total_ali
             is_alive = *cell == 1;
 
             let mut k: usize = 0;
-
             while k < 8 && count < 4 {
                 x = (i as i32 + MATRIX_INDEX_CHECKS[k][0] as i32) as i32;
                 y = (j as i32 + MATRIX_INDEX_CHECKS[k][1] as i32) as i32;
@@ -190,6 +190,7 @@ fn cell_count_neighbors(image: &mut RgbaImage, matrix: &MatrixArcType, total_ali
 
                    if mutex[x as usize][y as usize] == 1 {
                         count += 1;
+
                     }
                 }
 
@@ -206,15 +207,29 @@ fn cell_count_neighbors(image: &mut RgbaImage, matrix: &MatrixArcType, total_ali
         }
     }
 
-    draw_matrix(image, mutex);
-
+    draw_matrix(image, mutex, total_alive);
 }
 
 type MatrixArcType = Arc<Mutex<MatrixType>>;
 
+fn matrix_count(matrix: &MatrixArcType) -> u32{
+    let mutex = matrix.lock().unwrap();
+    let mut s: u32 = 0;
+    
+    for row in mutex.iter(){
+        console_log!("{:?}", row);
+        for cell in row.iter(){
+            if *cell == 1{
+                s += 1;
+            }
+        }
+    }
+
+    return s;
+}
+
 #[wasm_bindgen(start)]
 async fn start() {
-    let mut total_alive: u32 = START_CELL.try_into().unwrap();
     let matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
     let mut matrix: Arc<Mutex<MatrixType>> = Arc::new(Mutex::new(matrix));
 
@@ -226,7 +241,6 @@ async fn start() {
     .dyn_into::<web_sys::HtmlParagraphElement>()
     .map_err(|_| ())
     .unwrap();
-
 
 
     let epoch_total_text = document.get_element_by_id("epoch-total").unwrap();
@@ -242,6 +256,21 @@ async fn start() {
     .map_err(|_| ())
     .unwrap();
 
+    let cell_total_text = document.get_element_by_id("cell-total").unwrap();
+    let cell_total_text: web_sys::HtmlParagraphElement = cell_total_text
+    .dyn_into::<web_sys::HtmlParagraphElement>()
+    .map_err(|_| ())
+    .unwrap();
+
+
+    let cell_alive_text = document.get_element_by_id("cell-alive").unwrap();
+    let cell_alive_text: web_sys::HtmlParagraphElement = cell_alive_text
+    .dyn_into::<web_sys::HtmlParagraphElement>()
+    .map_err(|_| ())
+    .unwrap();
+
+
+    cell_total_text.set_text_content(Option::from(format!("TOTAL CELLS: {}", CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
 
     let canvas = document.get_element_by_id("canvas").unwrap();
     let canvas: web_sys::HtmlCanvasElement = canvas
@@ -271,51 +300,47 @@ async fn start() {
     context.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
     context.put_image_data(&imagedata, 0.0, 0.0).unwrap();
 
-    let test = js_sys::Function::new_no_args("
-        console.log('Ciaosoosososo');
-    ");
-
-    canvas.set_onclick(Option::from(&test));
-
     reset_all(&mut image, &context, &imagedata);
-
     matrix_random_fill(&mut image, &matrix, START_CELL);
 
-    let mut i: usize = 0;
     let mut epoch: usize = 0;
-    let mut _total_alive_cells: u32;
     let mut temp: DateTime<Local>;
     let mut _delta: Duration;
     let mut now: DateTime<Local>;
 
     let start = chrono::offset::Local::now();
+    let mut total_alive: u32 = 0;
     
     loop {
         temp = chrono::offset::Local::now();
-        _total_alive_cells = matrix_count_alive(&mut matrix);
 
         cell_count_neighbors(&mut image, &mut matrix, &mut total_alive);
         
         update_canvas(&context, &imagedata);
         js_sleep(CLOCK as i32).await.unwrap();
     
-        i += 1;
         epoch += 1;
 
-        if i == FPS as usize/8 {
+        if epoch % (FPS as usize/8) == 0 {
             now = chrono::offset::Local::now();
             _delta = temp - now;
-
             let seconds_from_start = ((now - start).num_milliseconds()) as f64/1000.0 as f64;
 
             epoch_text.set_text_content(Option::from(format!("EPOCH: {:.2}/s", epoch as f64/seconds_from_start).as_str()));
-    
-            epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-
             time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
+        }
+
+        if epoch % (FPS as usize) == 0{
+
+            epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
+            
+        }
 
 
-            i = 0;
+        if epoch % (FPS as usize*2) == 0 {
+            let cnt = matrix_count(&matrix.clone());
+            cell_alive_text.set_text_content(Option::from(format!("ALIVE CELLS: {}", cnt).as_str()));
+            console_log!("{:?}", matrix.lock().unwrap());
         }
     }
 }
