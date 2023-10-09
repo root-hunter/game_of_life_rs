@@ -54,11 +54,12 @@ async fn start() {
     let epoch_total_text = get_paragraph("epoch-total");
 
     let cell_total_text = get_paragraph("cell-total");
+
     let image_size_text = get_paragraph("image-size");
     image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
 
-    //let matrix_size_text = get_paragraph("matrix-size");
-    //matrix_size_text.set_text_content(Option::from(format!("MATRIX SIZE: {}x{}", CELL_FOR_SIDE, CELL_FOR_SIDE).as_str()));
+    let matrix_size_text = get_paragraph("matrix-size");
+    matrix_size_text.set_text_content(Option::from(format!("MATRIX SIZE: {}x{}", CELL_FOR_SIDE, CELL_FOR_SIDE).as_str()));
     console_log!("Hello world!");
 
 
