@@ -1,0 +1,14 @@
+{
+  "name": "game_of_life_rs",
+  "version": "0.1.0",
+  "files": [
+    "game_of_life_rs_bg.wasm",
+    "game_of_life_rs.js",
+    "game_of_life_rs.d.ts"
+  ],
+  "module": "game_of_life_rs.js",
+  "types": "game_of_life_rs.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
