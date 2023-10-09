@@ -15,8 +15,9 @@ rayon = "1.8.0"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.37"
 
+
 [dependencies.web-sys]
-version = "0.3.6"
+version = "0.3.64"
 features = [
   'CanvasRenderingContext2d',
   'Document',
@@ -25,7 +26,7 @@ features = [
   'Window',
   'ImageData',
   'HtmlParagraphElement',
-  'HtmlButtonElement'
+  'HtmlButtonElement',
 ]
 
 [build]
