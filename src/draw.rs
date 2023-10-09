@@ -1,6 +1,5 @@
 use crate::constants::*;
 
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use web_sys::{ImageData, CanvasRenderingContext2d};
 use image::{RgbaImage, Rgba};
 use js_sys::Math::random;
@@ -13,7 +12,6 @@ pub fn draw_background(img: &mut RgbaImage, r: u8, g: u8, b: u8, a: u8){
         }
     }
 }
-
 
 pub fn draw_grid(img: &mut RgbaImage, space: u32){
     let mut x = 0;

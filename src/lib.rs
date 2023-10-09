@@ -98,7 +98,6 @@ async fn start() {
     let mut start: bool = true;
 
     while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
-        let check_frame_fix = epoch % (FPS as usize/2) == 0;
         let check_frame_16th = epoch % (FPS as usize/16) == 0;
         
         if check_frame_16th {

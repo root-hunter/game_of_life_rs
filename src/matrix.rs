@@ -17,19 +17,9 @@ pub fn draw_matrix(image: &mut RgbaImage, matrix: &MatrixArcType){
     }
 }
 
-
-pub fn draw_matrix_black(image: &mut RgbaImage){
-    for i in 0..CFSU{
-        for j in 0..CFSU {
-            fill_cell(image, i as u32, j as u32);
-        }
-    }
-}
-
-
 pub fn matrix_random_fill(image: &mut RgbaImage, matrix: &mut MatrixArcType, matrix_cnt: &mut MatrixArcType, max: usize){
-    let mut randx = (random()*CELL_FOR_SIDE as f64) as usize;
-    let mut randy = (random()*CELL_FOR_SIDE as f64) as usize;
+    let mut randx: usize;
+    let mut randy: usize;
 
     for _ in 0..max {
         randx = (random()*CELL_FOR_SIDE as f64) as usize;
@@ -39,7 +29,6 @@ pub fn matrix_random_fill(image: &mut RgbaImage, matrix: &mut MatrixArcType, mat
         matrix_cnt[randx * CFSU + randy] = 1;
     }
 
-    let mut t: u32 = 0;
     draw_matrix(image, matrix);
 }
 
@@ -81,10 +70,9 @@ pub fn cell_count_neighbors(matrix: &mut MatrixArcType, matrix_count: &mut Matri
                 matrix[i * CFSU + j] = 0;
             }else if !is_alive && count == 3 {
                 matrix[i * CFSU + j] = 1;
-            }
-
-            if matrix_count[i * CFSU + j] == 0 && matrix[i * CFSU + j] == 1 {
-                matrix_count[i * CFSU + j] = 1;
+                if matrix_count[i * CFSU + j] == 0{
+                    matrix_count[i * CFSU + j] = 1;
+                }
             }
         }
     }

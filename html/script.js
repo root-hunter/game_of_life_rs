@@ -8,11 +8,11 @@ window.addEventListener("DOMContentLoaded", _ => {
 
             if (event.deltaY < 0) {
                 event.preventDefault();
-                scale += 0.1; // You can adjust the zoom factor as needed
+                scale += 2; // You can adjust the zoom factor as needed
                 zoomableContent.style.transform = `scale(${scale})`;
             } else if (event.deltaY > 0) {
                 if (scale > 1) {
-                    scale -= 0.1; // You can adjust the zoom factor as needed
+                    scale -= 2; // You can adjust the zoom factor as needed
                     zoomableContent.style.transform = `scale(${scale})`;
                 }
             }
