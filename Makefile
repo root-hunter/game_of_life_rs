@@ -1,5 +1,6 @@
 build:
 	wasm-pack build --release -d ./docs/pkg --target web
+	
 	rm ./docs/pkg/.gitignore
 
 serve:
