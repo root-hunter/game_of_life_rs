@@ -2,9 +2,15 @@
 <html lang="en-US">
   <head>
     <meta charset="utf-8" />
+    <meta name="description" content="The Game of Life Benchmark">
+    <meta name="keywords" content="game_of_life_rs,roothunter,root-hunter,Benchmark">
+    <link rel="author" href="https://github.com/root-hunter/"/>
+    <meta name="google-site-verification" content="Wlkdj73DhmtcqmTICLl8FdhyPpTAspfLtZyYoLK5yOM" />
+
     <title>The Game of Life</title>
-    <link rel="manifest" href="./static/manifest.json" />
-    <link rel="stylesheet" href="./static/style.css">
+
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="stylesheet" href="./style.css">
     <link href='https://fonts.googleapis.com/css?family=Press Start 2P' rel='stylesheet'>
   </head>
   <body>
@@ -31,11 +37,11 @@
         </div>
     </div>
 
-    <script type="text/javascript" charset="utf-8" src="./static/script.js"></script>
+    <script type="text/javascript" charset="utf-8" src="./script.js"></script>
 
     <script type="module">
       // Import the init function to initialize the WebAssembly module.
-      import init from './static/pkg/game_of_life_rs.js';
+      import init from './pkg/game_of_life_rs.js';
 
       async function run() {
         // Initialize the WebAssembly module.
@@ -46,6 +52,6 @@
     </script>
   </body>
   <footer>
-    <a href="https://github.com/root-hunter/"><p><b>roothunter inc.</b></p></a>
+    Powerd by <a href="https://github.com/root-hunter/"><p><b>roothunter</b></p></a>
   </footer>
 </html>

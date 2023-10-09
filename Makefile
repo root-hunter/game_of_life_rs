@@ -1,13 +1,5 @@
 build:
-	wasm-pack build --release --target web
-	mkdir -p ./static
-	cp -r ./pkg ./static/
-	cp ./html/script.js ./static/
-	cp ./html/style.css ./static/
-	cp ./html/manifest.json ./static/
-
-	cp ./html/index.html ./index.html
-	rm ./static/pkg/.gitignore
+	wasm-pack build --release -d ./docs/pkg --target web
 
 serve:
 	#python3 -m http.server
