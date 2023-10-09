@@ -1,8 +1,8 @@
 use wasm_bindgen::prelude::*;
+use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlButtonElement;
 use web_sys::HtmlCanvasElement;
 use web_sys::HtmlParagraphElement;
-use web_sys::CanvasRenderingContext2d;
 
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
@@ -16,18 +16,17 @@ pub async fn js_sleep(time_ms: i32) -> Result<(), JsValue> {
         let closure = Closure::once_into_js(move || {
             resolve.call0(&JsValue::null()).unwrap();
         });
-        window.set_timeout_with_callback_and_timeout_and_arguments_0(
-            closure.as_ref().unchecked_ref(),
-            time_ms, // 2000 milliseconds = 2 seconds
-        ).unwrap();
+        window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                closure.as_ref().unchecked_ref(),
+                time_ms, // 2000 milliseconds = 2 seconds
+            )
+            .unwrap();
     });
 
     // Convert the Promise to a Future and await it
-    JsFuture::from(promise)
-        .await
-        .map(|_| ())
+    JsFuture::from(promise).await.map(|_| ())
 }
-
 
 pub fn get_canvas_context(canvas: &HtmlCanvasElement) -> CanvasRenderingContext2d {
     let ctx = canvas
@@ -54,9 +53,9 @@ pub fn get_paragraph(id: &str) -> HtmlParagraphElement {
     let document = web_sys::window().unwrap().document().unwrap();
     let paragraph = document.get_element_by_id(id).unwrap();
     let paragraph: web_sys::HtmlParagraphElement = paragraph
-    .dyn_into::<web_sys::HtmlParagraphElement>()
-    .map_err(|_| ())
-    .unwrap();
+        .dyn_into::<web_sys::HtmlParagraphElement>()
+        .map_err(|_| ())
+        .unwrap();
 
     return paragraph;
 }
@@ -65,9 +64,9 @@ pub fn get_button(id: &str) -> HtmlButtonElement {
     let document = web_sys::window().unwrap().document().unwrap();
     let button = document.get_element_by_id(id).unwrap();
     let button: web_sys::HtmlButtonElement = button
-    .dyn_into::<web_sys::HtmlButtonElement>()
-    .map_err(|_| ())
-    .unwrap();
+        .dyn_into::<web_sys::HtmlButtonElement>()
+        .map_err(|_| ())
+        .unwrap();
 
     return button;
 }

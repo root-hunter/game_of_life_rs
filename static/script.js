@@ -4,7 +4,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 
     // Function to handle zoom in
     document.getElementById('zoomable-div').addEventListener('wheel', (event) => {
-        if(event.ctrlKey){
+        if (event.ctrlKey) {
 
             if (event.deltaY < 0) {
                 event.preventDefault();
@@ -16,8 +16,6 @@ window.addEventListener("DOMContentLoaded", _ => {
                     zoomableContent.style.transform = `scale(${scale})`;
                 }
             }
-
-            
         }
     });
 
@@ -26,12 +24,12 @@ window.addEventListener("DOMContentLoaded", _ => {
 
         // Convert the Canvas to a data URL
         const dataURL = canvas.toDataURL("image/png");
-        
+
         // Create a link element to trigger the download
         const downloadLink = document.createElement("a");
         downloadLink.href = dataURL;
         downloadLink.download = `game_of_life_${Date.now()}.png`;
-        
+
         // Simulate a click to trigger the download
         downloadLink.click();
     });
@@ -44,10 +42,10 @@ window.addEventListener("DOMContentLoaded", _ => {
     const playButton = document.getElementById('play');
 
     playButton.addEventListener('click', () => {
-        if(playButton.value === "stop"){
+        if (playButton.value === "stop") {
             playButton.textContent = "STOP";
             playButton.value = "start";
-        }else{
+        } else {
             playButton.textContent = "START";
             playButton.value = "stop";
         }

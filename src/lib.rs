@@ -1,22 +1,20 @@
-
 #[macro_use]
 mod utils;
 mod constants;
+mod draw;
 mod matrix;
 mod types;
-mod draw;
 
-use utils::*;
 use constants::*;
+use draw::*;
 use matrix::*;
 use types::*;
-use draw::*;
+use utils::*;
 
-use chrono::{DateTime, Local, Duration};
+use chrono::{DateTime, Duration, Local};
+use image::{Rgba, RgbaImage};
 use wasm_bindgen::prelude::*;
 use web_sys::ImageData;
-use image::{RgbaImage, Rgba};
-
 
 #[wasm_bindgen]
 extern "C" {
@@ -44,9 +42,8 @@ macro_rules! console_log {
 
 #[wasm_bindgen(start)]
 async fn start() {
-
-    let mut matrix: MatrixType = [0; CFSU*CFSU];
-    let mut matrix_cnt: MatrixType = [0; CFSU*CFSU];
+    let mut matrix: MatrixType = [0; CFSU * CFSU];
+    let mut matrix_cnt: MatrixType = [0; CFSU * CFSU];
     //let mut matrix: MatrixArcType = Arc::new(Mutex::new(matrix));
 
     let time_text = get_paragraph("time");
@@ -56,12 +53,15 @@ async fn start() {
     let cell_total_text = get_paragraph("cell-total");
 
     let image_size_text = get_paragraph("image-size");
-    image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
+    image_size_text.set_text_content(Option::from(
+        format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str(),
+    ));
 
     let matrix_size_text = get_paragraph("matrix-size");
-    matrix_size_text.set_text_content(Option::from(format!("MATRIX SIZE: {}x{}", CELL_FOR_SIDE, CELL_FOR_SIDE).as_str()));
+    matrix_size_text.set_text_content(Option::from(
+        format!("MATRIX SIZE: {}x{}", CELL_FOR_SIDE, CELL_FOR_SIDE).as_str(),
+    ));
     console_log!("Hello world!");
-
 
     let canvas = get_canvas("canvas");
     let context = get_canvas_context(&canvas);
@@ -93,54 +93,59 @@ async fn start() {
     let mut count = matrix_count(&matrix_cnt);
     let mut seconds_from_start: f64;
 
-    let play_button = get_button("play");    
+    let play_button = get_button("play");
 
     let mut start: bool = true;
 
-    while count <= (CELL_FOR_SIDE*CELL_FOR_SIDE) {
-        let check_frame_16th = epoch % (FPS as usize/16) == 0;
-        
+    while count <= (CELL_FOR_SIDE * CELL_FOR_SIDE) {
+        let check_frame_16th = epoch % (FPS as usize / 16) == 0;
+
         if check_frame_16th {
             start = play_button.value() == "start";
         }
 
         if start {
             temp = chrono::offset::Local::now();
-    
+
             cell_count_neighbors(&mut matrix, &mut matrix_cnt);
             draw_matrix(&mut image, &matrix);
             update_canvas(&context, &imagedata);
             js_sleep(CLOCK as i32).await.unwrap();
-        
+
             epoch += 1;
             now = chrono::offset::Local::now();
-            seconds_from_start = ((now - start_time).num_milliseconds()) as f64/1000.0 as f64;
-    
-            if check_frame_16th && count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
-                epoch_text.set_text_content(Option::from(format!("EPOCH (AVG): {:.2}/s", epoch as f64/seconds_from_start).as_str()));
+            seconds_from_start = ((now - start_time).num_milliseconds()) as f64 / 1000.0 as f64;
+
+            if check_frame_16th && count < (CELL_FOR_SIDE * CELL_FOR_SIDE) - 3 {
+                epoch_text.set_text_content(Option::from(
+                    format!("EPOCH (AVG): {:.2}/s", epoch as f64 / seconds_from_start).as_str(),
+                ));
             }
-    
+
             if check_frame_16th {
                 _delta = temp - now;
-                if  count < (CELL_FOR_SIDE*CELL_FOR_SIDE) - 3{
-                    time_text.set_text_content(Option::from(format!("TIME: {} s", seconds_from_start).as_str()));
-    
-                    epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-                    epoch_total_text.set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
-                }else{
-                    count = CELL_FOR_SIDE*CELL_FOR_SIDE;
+                if count < (CELL_FOR_SIDE * CELL_FOR_SIDE) - 3 {
+                    time_text.set_text_content(Option::from(
+                        format!("TIME: {} s", seconds_from_start).as_str(),
+                    ));
+
+                    epoch_total_text
+                        .set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
+                    epoch_total_text
+                        .set_text_content(Option::from(format!("EPOCH TOTAL: {}", epoch).as_str()));
+                } else {
+                    count = CELL_FOR_SIDE * CELL_FOR_SIDE;
                     time_text.set_class_name("colored");
                 }
-                cell_total_text.set_text_content(Option::from(format!("CELLS: {}/{}", count, CELL_FOR_SIDE*CELL_FOR_SIDE).as_str()));
-
+                cell_total_text.set_text_content(Option::from(
+                    format!("CELLS: {}/{}", count, CELL_FOR_SIDE * CELL_FOR_SIDE).as_str(),
+                ));
             }
-        
-    
+
             count = matrix_count(&matrix_cnt);
-        }else{
+        } else {
             js_sleep(CLOCK as i32).await.unwrap();
         }
-
     }
     time_text.set_class_name("colored");
 }
