@@ -1,21 +1,21 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* @returns {Promise<void>}
+*/
+export function start(): Promise<void>;
+/**
 * @param {number} time_ms
 * @returns {Promise<void>}
 */
 export function js_sleep(time_ms: number): Promise<void>;
-/**
-* @returns {Promise<void>}
-*/
-export function start(): Promise<void>;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly js_sleep: (a: number) => number;
   readonly start: () => void;
+  readonly js_sleep: (a: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_export_2: WebAssembly.Table;

@@ -4,18 +4,18 @@ mod utils;
 mod constants;
 mod matrix;
 mod types;
+mod draw;
 
 use utils::*;
 use constants::*;
 use matrix::*;
 use types::*;
+use draw::*;
 
 use chrono::{DateTime, Local, Duration};
 use wasm_bindgen::prelude::*;
 use web_sys::ImageData;
 use image::{RgbaImage, Rgba};
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 
 
 #[wasm_bindgen]
@@ -44,17 +44,22 @@ macro_rules! console_log {
 
 #[wasm_bindgen(start)]
 async fn start() {
-    let mut matrix: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
-    let mut matrix_cnt: MatrixType = [[0; CELL_FOR_SIDE_USIZE]; CELL_FOR_SIDE_USIZE];
+
+    let mut matrix: MatrixType = [0; CFSU*CFSU];
+    let mut matrix_cnt: MatrixType = [0; CFSU*CFSU];
     //let mut matrix: MatrixArcType = Arc::new(Mutex::new(matrix));
 
-    console_log!("INITIAL SUM: {:?}", matrix_count_alive(&matrix));
-
+    let time_text = get_paragraph("time");
     let epoch_text = get_paragraph("epoch");
     let epoch_total_text = get_paragraph("epoch-total");
-    let time_text = get_paragraph("time");
+
     let cell_total_text = get_paragraph("cell-total");
     let image_size_text = get_paragraph("image-size");
+    image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
+
+    //let matrix_size_text = get_paragraph("matrix-size");
+    //matrix_size_text.set_text_content(Option::from(format!("MATRIX SIZE: {}x{}", CELL_FOR_SIDE, CELL_FOR_SIDE).as_str()));
+    console_log!("Hello world!");
 
 
     let canvas = get_canvas("canvas");
@@ -75,7 +80,7 @@ async fn start() {
     context.put_image_data(&imagedata, 0.0, 0.0).unwrap();
 
     reset_all(&mut image, &context, &imagedata);
-    matrix_random_fill(&mut image, &mut matrix, START_CELL);
+    matrix_random_fill(&mut image, &mut matrix, &mut matrix_cnt, START_CELL);
 
     let mut epoch: usize = 0;
     let mut temp: DateTime<Local>;
@@ -83,12 +88,11 @@ async fn start() {
     let mut now: DateTime<Local>;
 
     let start_time = chrono::offset::Local::now();
+
     let mut count = matrix_count(&matrix_cnt);
     let mut seconds_from_start: f64;
 
     let play_button = get_button("play");    
-
-    image_size_text.set_text_content(Option::from(format!("IMAGE SIZE: {}x{}", USIZE, USIZE).as_str()));
 
     let mut start: bool = true;
 
@@ -101,11 +105,10 @@ async fn start() {
         }
 
         if start {
-            let mut total_alive: u32 = 0;
             temp = chrono::offset::Local::now();
     
-            cell_count_neighbors(&mut matrix, &mut matrix_cnt, &mut total_alive);
-            draw_matrix(&mut image, &matrix, &mut total_alive);
+            cell_count_neighbors(&mut matrix, &mut matrix_cnt);
+            draw_matrix(&mut image, &matrix);
             update_canvas(&context, &imagedata);
             js_sleep(CLOCK as i32).await.unwrap();
         
