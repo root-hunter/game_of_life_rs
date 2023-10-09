@@ -3,6 +3,7 @@ build:
 	mkdir -p ./static
 	cp -r ./pkg ./static/
 	cp ./html/* ./static/
+	cp ./html/index.html ./index.html
 	rm ./static/pkg/.gitignore
 
 serve:
