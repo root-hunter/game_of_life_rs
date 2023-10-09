@@ -2,7 +2,10 @@ build:
 	wasm-pack build --release --target web
 	mkdir -p ./static
 	cp -r ./pkg ./static/
-	cp ./html/* ./static/
+	cp ./html/script.js ./static/
+	cp ./html/style.css ./static/
+	cp ./html/manifest.json ./static/
+
 	cp ./html/index.html ./index.html
 	rm ./static/pkg/.gitignore
 
