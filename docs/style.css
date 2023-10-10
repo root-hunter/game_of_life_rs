@@ -41,7 +41,7 @@ button {
   background-color: orange;
 }
 
-.menu-button{
+.menu-button, .div-footer{
   padding-top: 20px;
   padding-bottom: 20px;
 }
@@ -61,3 +61,4 @@ button[value="stop"]{
 button[value="info"]{
   background-color: grey;
 }
+
