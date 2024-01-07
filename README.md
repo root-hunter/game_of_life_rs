@@ -40,6 +40,7 @@
 
 ## Live demo
 <li><a href="https://root-hunter.github.io/game_of_life_rs/">Live demo hosted on GitHub Pages</a></li>
+<br/>
 <img src="/assets/image/video.gif"/>
 
 
