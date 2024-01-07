@@ -39,9 +39,9 @@
 5. Go to <a href="http://localhost:8000">localhost</a>
 
 ## Live demo
+<li><a href="https://root-hunter.github.io/game_of_life_rs/">Live demo hosted on GitHub Pages</a></li>
 <img src="/assets/image/video.gif"/>
 
-<li><a href="https://root-hunter.github.io/game_of_life_rs/">Live demo hosted on GitHub Pages</a></li>
 
 
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
