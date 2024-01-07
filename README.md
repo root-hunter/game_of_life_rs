@@ -44,4 +44,4 @@
 
 
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
-[license-url]: https://github.com/root-hunter/game_og_life_rs/blob/master/LICENSE
+[license-url]: https://github.com/root-hunter/game_of_life_rs/blob/master/LICENSE
